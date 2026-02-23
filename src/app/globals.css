@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  color-scheme: dark;
+}
+
 :root {
   --bg-primary: #0a0a0f;
   --bg-card: #12121a;
@@ -29,6 +33,12 @@ body {
 ::-webkit-scrollbar-thumb {
   background: #333;
   border-radius: 3px;
+}
+
+/* native select/option dark theme fix */
+select option {
+  background: #1a1a26;
+  color: #e4e4ed;
 }
 
 /* textarea auto-grow helper */
