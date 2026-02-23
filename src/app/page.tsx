@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import yaml from "js-yaml";
 import type { InputData, DraftResponse } from "@/lib/types";
 import { TAB_LABELS } from "@/lib/types";
@@ -246,26 +246,64 @@ function SelectInput({ label, value, onChange, options }: {
 }) {
   const isCustom = value !== "" && !options.some((o) => o.value === value);
   const [showCustom, setShowCustom] = useState(isCustom);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const selected = options.find((o) => o.value === value);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   return (
     <div className="space-y-1.5">
       <label className="text-sm font-medium text-slate-300">{label}</label>
-      <select value={showCustom ? "__custom__" : value}
-        onChange={(e) => {
-          if (e.target.value === "__custom__") { setShowCustom(true); onChange(""); }
-          else { setShowCustom(false); onChange(e.target.value); }
-        }}
-        className="w-full px-3 py-2 rounded-lg bg-[#1a1a26] border border-[#2a2a3a] text-slate-100 text-sm outline-none focus:border-blue-500 transition-colors">
-        <option value="">-- 선택하세요 --</option>
-        {options.map((o) => (<option key={o.label} value={o.value}>{o.label}</option>))}
-        <option value="__custom__">직접 입력...</option>
-      </select>
+      <div ref={ref} className="relative">
+        <button type="button" onClick={() => { if (showCustom) return; setOpen(!open); }}
+          className={`w-full px-3 py-2.5 rounded-lg bg-[#1a1a26] border text-sm text-left flex items-center justify-between transition-colors ${
+            open ? "border-blue-500 ring-1 ring-blue-500/30" : "border-[#2a2a3a] hover:border-[#3a3a4a]"
+          }`}>
+          <span className={selected && !showCustom ? "text-slate-100" : "text-slate-500"}>
+            {showCustom ? "직접 입력 중..." : selected ? selected.label : "선택하세요"}
+          </span>
+          <svg className={`w-4 h-4 text-slate-500 transition-transform ${open ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+        </button>
+        {open && (
+          <div className="absolute z-50 mt-1 w-full max-h-60 overflow-auto rounded-lg bg-[#1a1a26] border border-[#2a2a3a] shadow-xl shadow-black/40 py-1">
+            {options.map((o) => (
+              <button key={o.label} type="button"
+                onClick={() => { setShowCustom(false); onChange(o.value); setOpen(false); }}
+                className={`w-full px-3 py-2 text-left text-sm transition-colors flex items-center gap-2 ${
+                  o.value === value
+                    ? "bg-blue-500/10 text-blue-300"
+                    : "text-slate-300 hover:bg-[#22222e]"
+                }`}>
+                {o.value === value && <span className="text-blue-400 text-xs">&#10003;</span>}
+                {o.label}
+              </button>
+            ))}
+            <div className="border-t border-[#2a2a3a] mt-1 pt-1">
+              <button type="button"
+                onClick={() => { setShowCustom(true); onChange(""); setOpen(false); }}
+                className="w-full px-3 py-2 text-left text-sm text-slate-500 hover:bg-[#22222e] hover:text-slate-300 transition-colors">
+                ✏️ 직접 입력...
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
       {showCustom && (
-        <textarea value={value} onChange={(e) => onChange(e.target.value)} placeholder="직접 입력하세요..." rows={3}
-          className="w-full px-3 py-2 rounded-lg bg-[#1a1a26] border border-[#2a2a3a] text-slate-100 placeholder:text-slate-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 outline-none transition-colors text-sm leading-relaxed mt-1.5" />
+        <div className="space-y-1.5">
+          <textarea value={value} onChange={(e) => onChange(e.target.value)} placeholder="직접 입력하세요..." rows={3}
+            className="w-full px-3 py-2 rounded-lg bg-[#1a1a26] border border-[#2a2a3a] text-slate-100 placeholder:text-slate-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 outline-none transition-colors text-sm leading-relaxed" />
+          <button type="button" onClick={() => { setShowCustom(false); if (!options.some((o) => o.value === value)) onChange(options[0]?.value ?? ""); }}
+            className="text-xs text-slate-500 hover:text-slate-300 transition-colors">프리셋으로 돌아가기</button>
+        </div>
       )}
       {value && !showCustom && (
-        <div className="mt-1.5 px-3 py-2 rounded-lg bg-blue-500/5 border border-blue-500/10 text-xs text-slate-400 whitespace-pre-wrap leading-relaxed">{value}</div>
+        <div className="mt-1.5 px-3 py-2 rounded-lg bg-blue-500/5 border border-blue-500/10 text-xs text-slate-400 whitespace-pre-wrap leading-relaxed max-h-32 overflow-auto">{value}</div>
       )}
     </div>
   );
