@@ -1,4 +1,5 @@
 export interface DocMeta {
+  idea: string;
   doc_title: string;
   scope: string;
   audience: string;

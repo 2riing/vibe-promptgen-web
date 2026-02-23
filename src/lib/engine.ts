@@ -6,6 +6,7 @@ import { DEFAULT_TEMPLATE } from "./defaults";
 /* ------------------------------------------------------------------ */
 
 const FIELD_MAP: Record<string, string> = {
+  "doc_meta.idea": "IDEA",
   "doc_meta.doc_title": "DOC_TITLE",
   "doc_meta.scope": "SCOPE",
   "doc_meta.audience": "AUDIENCE",
